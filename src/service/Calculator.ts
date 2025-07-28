@@ -2,16 +2,16 @@ import z from "zod";
 import logger from "../logger.ts";
 
 const requestSchema = z.object({
-    operation: z.enum(["+", "-", "*", "/"], {message: "Operation must be one of +, -, *, /"}),
+    operation: z.enum(["+", "-", "*", "/"], {message: "Operation must be one of the following: +, -, *, /"}),
     first: z.number({message: "First number must be a number"}),
     second: z.number({message: "Second number must be a number"}),
 });
 
-type Request = z.infer<typeof requestSchema>;
+type CalcRequest = z.infer<typeof requestSchema>;
 
-type CalculatorResponse = Request & {result: number;};
+type CalcResponse = CalcRequest & {result: number;};
 
-type Operation = Request["operation"];
+type Operation = CalcRequest["operation"];
 
 type OperationMap = {
     [key in Operation]: (a: number, b: number) => number;
@@ -25,28 +25,31 @@ const MAPPER: OperationMap = {
 }
 
 export class Calculator {
-    async compute (bodyObject: unknown): Promise<CalculatorResponse> {
+    async compute (bodyObject: unknown): Promise<CalcResponse> {
+        const calcRequest = this._getCalcRequest(bodyObject);
+        const result = this._calculate(calcRequest);
+        const response: CalcResponse = {...calcRequest, result};
+        logger.debug(`Calculator: response: ${JSON.stringify(response)}`);
+
+        return response;
+    }
+    _getCalcRequest(bodyObject: unknown): CalcRequest {
         try {
             const data = requestSchema.parse(bodyObject);
-            logger.debug(`Valid request received: ${JSON.stringify(data)}`);
-
-            const result = this._apply(data);
-            const response: CalculatorResponse = {...data, result};
-            logger.debug(`Response: ${JSON.stringify(response)}`);
-
-            return response;
+            logger.debug(`Calculator: Valid request received: ${JSON.stringify(data)}`);
+            return data;
         }
         catch (err: unknown) {
-            logger.error(`Calculator Error: ${err}`);
+            logger.error(`Calculator: Error: ${err}`);
             if (err instanceof z.ZodError) {
                 const message = this._getZodErrorMessages(err);
-                logger.debug(`Request validation failed: ${message}`);
+                logger.debug(`Calculator: Request validation failed: ${message}`);
                 throw new Error(message);
             }
             throw err;
         }
     }
-    _apply({first, second, operation}: Request): number {
+    _calculate({first, second, operation}: CalcRequest): number {
         return MAPPER[operation](first, second);
     }
     _getZodErrorMessages(zodError: z.ZodError): string {
