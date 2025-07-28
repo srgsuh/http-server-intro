@@ -2,30 +2,34 @@ import {IncomingMessage, ServerResponse} from "node:http";
 import createError from "http-errors";
 import {Calculator} from "../service/Calculator.js";
 
+
+export interface ServiceRequest {
+    result: unknown;
+}
+
 export interface Service {
-    compute(bodyObject: unknown): string;
+    compute(bodyObject: unknown): Promise<ServiceRequest>;
 }
 
 const services = new Map<string, Service>();
 services.set('calc', new Calculator());
 
 export async function mainController(req: IncomingMessage, res: ServerResponse) {
-    try {
-        await processRequest(req, res);
-    }
-    catch (err: unknown) {
-        sendError(res, err);
-    }
+    processRequest(req, res)
+        .catch(err => {sendError(res, err)});
 }
 
 async function processRequest(req: IncomingMessage, res: ServerResponse) {
-    const service = getService(req.url ?? "", req.method ?? "");
+    if (!req.url || ! req.method) {
+        throw createError.BadRequest("Malformed request: missing method or URL");
+    }
+    const service = getService(req.url, req.method);
 
     const body = await getBody(req);
 
-    const responseString = service.compute(body);
+    const serviceRequest = await service.compute(body);
 
-    sendSuccess(res, responseString);
+    sendSuccess(res, JSON.stringify(serviceRequest.result));
 }
 
 function sendSuccess(res: ServerResponse, jsonBody: string) {

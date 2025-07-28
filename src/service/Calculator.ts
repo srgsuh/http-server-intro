@@ -1,4 +1,4 @@
-import {Service} from "../controller/MainController.js";
+import {Service, ServiceRequest} from "../controller/MainController.js";
 import z from "zod";
 import logger from "../logger.js";
 
@@ -10,7 +10,7 @@ const requestSchema = z.object({
 
 type Request = z.infer<typeof requestSchema>;
 
-type Response = Request & {result: number;};
+type CalculatorResponse = Request & {result: number;};
 
 type Operation = Request["operation"];
 
@@ -26,7 +26,7 @@ const MAPPER: OperationMap = {
 }
 
 export class Calculator implements Service{
-    compute(bodyObject: unknown): string {
+    async compute (bodyObject: unknown): Promise<ServiceRequest> {
         const request = requestSchema.safeParse(bodyObject);
         if (!request.success) {
             const message = this._getZodErrorMessages(request.error);
@@ -37,10 +37,10 @@ export class Calculator implements Service{
         logger.debug(`Valid request received: ${JSON.stringify(data)}`);
 
         const result = this._apply(data);
-        const response: Response = {...data, result};
+        const response: CalculatorResponse = {...data, result};
         logger.debug(`Response: ${JSON.stringify(response)}`);
 
-        return JSON.stringify(response);
+        return {result: response};
     }
     _apply({first, second, operation}: Request): number {
         return MAPPER[operation](first, second);
