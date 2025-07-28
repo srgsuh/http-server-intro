@@ -2,9 +2,9 @@ import z from "zod";
 import logger from "../logger.ts";
 
 const requestSchema = z.object({
-    operation: z.enum(["+", "-", "*", "/"], {message: "Operation must be one of the following: +, -, *, /"}),
-    first: z.number({message: "First number must be a number"}),
-    second: z.number({message: "Second number must be a number"}),
+    operation: z.enum(["+", "-", "*", "/"], {message: "Field 'operation' must be one of the following: +, -, *, /"}),
+    first: z.number({message: "Field 'first' must be a number"}),
+    second: z.number({message: "Field 'second' must be a number"}),
 });
 
 type CalcRequest = z.infer<typeof requestSchema>;
@@ -40,7 +40,7 @@ export class Calculator {
             return data;
         }
         catch (err: unknown) {
-            logger.error(`Calculator: Error: ${err}`);
+            logger.debug(`Calculator: Error: ${err}`);
             if (err instanceof z.ZodError) {
                 const message = this._getZodErrorMessages(err);
                 logger.debug(`Calculator: Request validation failed: ${message}`);
