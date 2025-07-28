@@ -10,11 +10,10 @@ const requestSchema = z.object({
 
 type Request = z.infer<typeof requestSchema>;
 
-type Response = Request & {
-    result: number;
-};
+type Response = Request & {result: number;};
 
 type Operation = Request["operation"];
+
 type OperationMap = {
     [key in Operation]: (a: number, b: number) => number;
 }

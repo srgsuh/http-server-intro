@@ -1,4 +1,7 @@
 {
+  "server": {
+    "port": 3501
+  },
   "logger": {
     "silent": false,
     "level": "debug",
