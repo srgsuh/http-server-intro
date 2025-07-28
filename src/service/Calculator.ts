@@ -1,4 +1,4 @@
-import {Service, ServiceRequest} from "../controller/MainController.js";
+import {Service, ServiceResponse} from "../controller/MainController.js";
 import z from "zod";
 import logger from "../logger.js";
 
@@ -26,7 +26,7 @@ const MAPPER: OperationMap = {
 }
 
 export class Calculator implements Service{
-    async compute (bodyObject: unknown): Promise<ServiceRequest> {
+    async compute (bodyObject: unknown): Promise<ServiceResponse> {
         const request = requestSchema.safeParse(bodyObject);
         if (!request.success) {
             const message = this._getZodErrorMessages(request.error);

@@ -3,12 +3,12 @@ import createError from "http-errors";
 import {Calculator} from "../service/Calculator.js";
 
 
-export interface ServiceRequest {
+export interface ServiceResponse {
     result: unknown;
 }
 
 export interface Service {
-    compute(bodyObject: unknown): Promise<ServiceRequest>;
+    compute(bodyObject: unknown): Promise<ServiceResponse>;
 }
 
 const services = new Map<string, Service>();
@@ -27,9 +27,9 @@ async function processRequest(req: IncomingMessage, res: ServerResponse) {
 
     const body = await getBody(req);
 
-    const serviceRequest = await service.compute(body);
+    const serviceResponse = await service.compute(body);
 
-    sendSuccess(res, JSON.stringify(serviceRequest.result));
+    sendSuccess(res, JSON.stringify(serviceResponse.result));
 }
 
 function sendSuccess(res: ServerResponse, jsonBody: string) {
@@ -48,7 +48,7 @@ function sendError(res: ServerResponse, err: unknown) {
         error = createError(400, message);
     }
 
-    res.writeHead(error.statusCode, { 'Content-Type': 'application/json' });
+    res.writeHead(error.statusCode, {'Content-Type': 'application/json'});
     res.end(JSON.stringify({ error: error.message}));
 }
 
