@@ -1,35 +1,20 @@
 import {IncomingMessage, ServerResponse} from "node:http";
 import createError from "http-errors";
-import {Calculator} from "../service/Calculator.js";
+import {Calculator} from "../service/Calculator.ts";
 
+const calculator = new Calculator();
 
-export interface ServiceResponse {
-    result: unknown;
-}
-
-export interface Service {
-    compute(bodyObject: unknown): Promise<ServiceResponse>;
-}
-
-const services = new Map<string, Service>();
-services.set('calc', new Calculator());
-
-export async function mainController(req: IncomingMessage, res: ServerResponse) {
+export async function calcController(req: IncomingMessage, res: ServerResponse) {
     processRequest(req, res)
         .catch(err => {sendError(res, err)});
 }
 
 async function processRequest(req: IncomingMessage, res: ServerResponse) {
-    if (!req.url || ! req.method) {
-        throw createError.BadRequest("Malformed request: missing method or URL");
-    }
-    const service = getService(req.url, req.method);
-
     const body = await getBody(req);
 
-    const serviceResponse = await service.compute(body);
+    const serviceResponse = await calculator.compute(body);
 
-    sendSuccess(res, JSON.stringify(serviceResponse.result));
+    sendSuccess(res, JSON.stringify(serviceResponse));
 }
 
 function sendSuccess(res: ServerResponse, jsonBody: string) {
@@ -52,19 +37,6 @@ function sendError(res: ServerResponse, err: unknown) {
     res.end(JSON.stringify({ error: error.message}));
 }
 
-function getService(path: string, method: string): Service {
-    const clearPath = path.replace(/\/$/, "");
-    const servicePath = clearPath.split("/")[1];
-    const service = services.get(servicePath);
-    if (!service) {
-        throw createError.NotFound(`Path ${path} not found`);
-    }
-    if (method !== 'POST') {
-        throw createError.MethodNotAllowed(`Method ${method} is not allowed for path ${path}`);
-    }
-    return service;
-}
-
 async function getBody(req: IncomingMessage): Promise<unknown> {
 
     let bodyString = "";
@@ -81,8 +53,6 @@ async function getBody(req: IncomingMessage): Promise<unknown> {
         if (err instanceof SyntaxError) {
             throw createError.BadRequest("Invalid JSON");
         }
-        else {
-            throw err;
-        }
+        throw err;
     }
 }

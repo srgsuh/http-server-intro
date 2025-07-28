@@ -1,5 +1,5 @@
 import {createServer} from "node:http";
-import {mainController} from "./controller/MainController.js";
+import {calcController} from "./controller/calcController.js";
 import logger from "./logger.js";
 import {getConfigValue} from "./config_params.js";
 import router from "./routes.js";

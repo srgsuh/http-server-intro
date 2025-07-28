@@ -1,4 +1,3 @@
-import {Service, ServiceResponse} from "../controller/MainController.js";
 import z from "zod";
 import logger from "../logger.js";
 
@@ -25,22 +24,27 @@ const MAPPER: OperationMap = {
     "/": (a: number, b: number) => a / b,
 }
 
-export class Calculator implements Service{
-    async compute (bodyObject: unknown): Promise<ServiceResponse> {
-        const request = requestSchema.safeParse(bodyObject);
-        if (!request.success) {
-            const message = this._getZodErrorMessages(request.error);
-            logger.debug(`Request validation failed: ${message}`);
-            throw new Error(message);
+export class Calculator {
+    async compute (bodyObject: unknown): Promise<CalculatorResponse> {
+        try {
+            const data = requestSchema.parse(bodyObject);
+            logger.debug(`Valid request received: ${JSON.stringify(data)}`);
+
+            const result = this._apply(data);
+            const response: CalculatorResponse = {...data, result};
+            logger.debug(`Response: ${JSON.stringify(response)}`);
+
+            return response;
         }
-        const data = request.data;
-        logger.debug(`Valid request received: ${JSON.stringify(data)}`);
-
-        const result = this._apply(data);
-        const response: CalculatorResponse = {...data, result};
-        logger.debug(`Response: ${JSON.stringify(response)}`);
-
-        return {result: response};
+        catch (err: unknown) {
+            logger.error(`Calculator Error: ${err}`);
+            if (err instanceof z.ZodError) {
+                const message = this._getZodErrorMessages(err);
+                logger.debug(`Request validation failed: ${message}`);
+                throw new Error(message);
+            }
+            throw err;
+        }
     }
     _apply({first, second, operation}: Request): number {
         return MAPPER[operation](first, second);

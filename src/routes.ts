@@ -1,12 +1,14 @@
 import {IncomingMessage, ServerResponse} from "node:http";
-import {defaultController} from "./controller/defaultController.ts";
+import {notFoundController} from "./controller/notFoundController.ts";
+import {calcController} from "./controller/calcController.ts";
 
 type Controller = (req: IncomingMessage, res: ServerResponse) => Promise<void>;
 
 const CONTROLLERS: {[key: string]: Controller} = {
-    "calc": async () => {}
+    "calc": calcController
 };
 
-export default function router(path: string): Controller {
-    return CONTROLLERS[path] || defaultController;
+export default function router(url: string): Controller {
+    const path = url.split("/")[1];
+    return CONTROLLERS[path] || notFoundController;
 }
