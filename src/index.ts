@@ -1,8 +1,7 @@
 import {createServer} from "node:http";
-import {calcController} from "./controller/calcController.js";
-import logger from "./logger.js";
-import {getConfigValue} from "./config_params.js";
-import router from "./routes.js";
+import logger from "./logger.ts";
+import {getConfigValue} from "./config_params.ts";
+import router from "./routes.ts";
 
 const DEFAULT_PORT = 3501;
 

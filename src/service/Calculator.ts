@@ -1,5 +1,5 @@
 import z from "zod";
-import logger from "../logger.js";
+import logger from "../logger.ts";
 
 const requestSchema = z.object({
     operation: z.enum(["+", "-", "*", "/"], {message: "Operation must be one of +, -, *, /"}),
