@@ -12,7 +12,7 @@ if (getConfigValue<boolean>("logger.console.enabled", false)) {
     }));
 }
 
-const customTimestamp = format((info, opts) => {
+const customTimestamp = format((info, _) => {
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, '0');
     const minutes = now.getMinutes().toString().padStart(2, '0');
