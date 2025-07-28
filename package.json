@@ -1,0 +1,27 @@
+{
+  "name": "random-streams",
+  "version": "1.0.0",
+  "description": "and app, that generates random sequences, demonstrating node streams potential",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "node --loader ts-node/esm --no-warnings index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "config": "^4.0.0",
+    "lodash": "^4.17.21",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/config": "^3.3.5",
+    "@types/lodash": "^4.17.20",
+    "@types/node": "^24.0.12",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}
