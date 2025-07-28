@@ -1,5 +1,6 @@
 import {Service} from "../controller/MainController.js";
 import z from "zod";
+import logger from "../logger.js";
 
 const requestSchema = z.object({
     operation: z.enum(["+", "-", "*", "/"]),
@@ -28,8 +29,10 @@ const MAPPER: OperationMap = {
 export class Calculator implements Service{
     compute(bodyObject: unknown): string {
         const request = requestSchema.parse(bodyObject);
+        logger.debug(`Received request: ${JSON.stringify(request)}`);
         const result = this._apply(request);
         const response: Response = {...request, result};
+        logger.debug(`Response: ${JSON.stringify(request)}`);
         return JSON.stringify(response);
     }
     _apply({first, second, operation}: Request): number {

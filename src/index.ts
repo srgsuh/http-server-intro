@@ -1,4 +1,4 @@
-import {createServer, ServerResponse} from "node:http";
+import {createServer} from "node:http";
 import {mainController} from "./controller/MainController.js";
 import logger from "./logger.js";
 
