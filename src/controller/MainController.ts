@@ -9,44 +9,32 @@ export interface Service {
 const services = new Map<string, Service>();
 services.set('calc', new Calculator());
 
-function getService(path: string): Service | undefined {
-    const clearPath = path.replace(/\/$/, "");
-    const service = clearPath.split("/")[1];
-    return service? services.get(service) : undefined;
-}
-
 export async function mainController(req: IncomingMessage, res: ServerResponse) {
     try {
         await processRequest(req, res);
     }
     catch (err: unknown) {
-        handleError(res, err);
+        sendError(res, err);
     }
 }
 
 async function processRequest(req: IncomingMessage, res: ServerResponse) {
-    if (req.method !== 'POST') {
-        throw createError.MethodNotAllowed();
-    }
+    const service = getService(req.url ?? "", req.method ?? "");
 
-    const service = getService(req.url || "/");
-    if (!service) {
-        throw createError.NotFound(`Path ${req.url} not found`);
-    }
-    let bodyString = "";
-    for await (const chunk of req) {
-        bodyString += chunk;
-    }
+    const body = await getBody(req);
 
-    const bodyObject = JSON.parse(bodyString);
-    const responseString = service.compute(bodyObject);
+    const responseString = service.compute(body);
 
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-    res.end(responseString);
+    sendSuccess(res, responseString);
 }
 
-function handleError(res: ServerResponse, err: unknown) {
+function sendSuccess(res: ServerResponse, jsonBody: string) {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.end(jsonBody);
+}
+
+function sendError(res: ServerResponse, err: unknown) {
     let error: createError.HttpError;
     if (createError.isHttpError(err)) {
         error = err;
@@ -58,4 +46,39 @@ function handleError(res: ServerResponse, err: unknown) {
 
     res.writeHead(error.statusCode, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: error.message}));
+}
+
+function getService(path: string, method: string): Service {
+    const clearPath = path.replace(/\/$/, "");
+    const servicePath = clearPath.split("/")[1];
+    const service = services.get(servicePath);
+    if (!service) {
+        throw createError.NotFound(`Path ${path} not found`);
+    }
+    if (method !== 'POST') {
+        throw createError.MethodNotAllowed(`Method ${method} is not allowed for path ${path}`);
+    }
+    return service;
+}
+
+async function getBody(req: IncomingMessage): Promise<unknown> {
+
+    let bodyString = "";
+    for await (const chunk of req) {
+        bodyString += chunk;
+    }
+    if (!bodyString) {
+        throw createError.BadRequest("Empty body");
+    }
+    try {
+        return JSON.parse(bodyString);
+    }
+    catch (err: unknown) {
+        if (err instanceof SyntaxError) {
+            throw createError.BadRequest("Invalid JSON");
+        }
+        else {
+            throw err;
+        }
+    }
 }
