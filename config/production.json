@@ -1,13 +1,11 @@
 {
+  "server": {
+    "port": 3501
+  },
   "logger": {
     "level": "warn",
     "console": {
       "enabled": true
     }
-  },
-  "random_sequence": {
-    "min": 1,
-    "max": 49,
-    "count": 7
   }
 }
