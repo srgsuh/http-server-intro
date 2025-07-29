@@ -28,7 +28,7 @@ function calculate(request: Request, calculator: Calculator) {
     }
     catch (err: unknown) {
         if (err instanceof CalculatorError) {
-            throw createError.BadRequest(err.message);
+            throw createError.NotFound(err.message);
         }
         throw err;
     }
