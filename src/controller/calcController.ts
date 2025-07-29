@@ -1,5 +1,5 @@
 import {IncomingMessage, ServerResponse} from "node:http";
-import {Calculator, CalculatorError} from "../service/Calculator.ts";
+import {Calculator, CalculatorError, CalculatorUnsupportedOperationError} from "../service/Calculator.ts";
 import {getRequestBody, sendError, sendSuccess} from "../utils/http-utils.ts";
 import z from "zod";
 import logger from "../logger.ts";
@@ -27,8 +27,11 @@ function calculate(request: Request, calculator: Calculator) {
         return calculator.compute(request);
     }
     catch (err: unknown) {
-        if (err instanceof CalculatorError) {
+        if (err instanceof CalculatorUnsupportedOperationError) {
             throw createError.NotFound(err.message);
+        }
+        if (err instanceof CalculatorError) {
+            throw createError.BadRequest(err.message);
         }
         throw err;
     }
