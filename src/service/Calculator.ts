@@ -1,20 +1,17 @@
-import z from "zod";
 import logger from "../logger.ts";
 
-const requestSchema = z.object({
-    operation: z.enum(["+", "-", "*", "/"], {message: "Field 'operation' must be one of the following: +, -, *, /"}),
-    first: z.number({message: "Field 'first' must be a number"}),
-    second: z.number({message: "Field 'second' must be a number"}),
-});
+export type CalcRequest = {
+    operation: string;
+    first: number;
+    second: number;
+};
 
-type CalcRequest = z.infer<typeof requestSchema>;
+export type CalcResponse = CalcRequest & {result: number;};
 
-type CalcResponse = CalcRequest & {result: number;};
-
-type Operation = CalcRequest["operation"];
+export class CalculatorError extends Error {}
 
 type OperationMap = {
-    [key in Operation]: (a: number, b: number) => number;
+    [operation: string]: (a: number, b: number) => number;
 }
 
 const MAPPER: OperationMap = {
@@ -25,36 +22,25 @@ const MAPPER: OperationMap = {
 }
 
 export class Calculator {
-    async compute (bodyObject: unknown): Promise<CalcResponse> {
-        const calcRequest = await this._getCalcRequest(bodyObject);
+    compute (calcRequest: CalcRequest): CalcResponse {
+        this._validate(calcRequest);
         const result = this._calculate(calcRequest);
         const response: CalcResponse = {...calcRequest, result};
         logger.debug(`Calculator: response: ${JSON.stringify(response)}`);
 
         return response;
     }
-    async _getCalcRequest(bodyObject: unknown): Promise<CalcRequest> {
-        try {
-            const data = await requestSchema.parseAsync(bodyObject);
-            logger.debug(`Calculator: Valid request received: ${JSON.stringify(data)}`);
-            return data;
+
+    _validate({operation, second}: CalcRequest): void {
+        if (!(operation in MAPPER)) {
+            throw new CalculatorError(`Unsupported operation: ${operation}. Expected one of: ${Object.keys(MAPPER).join(", ")}`);
         }
-        catch (err: unknown) {
-            logger.debug(`Calculator: Error: ${err}`);
-            if (err instanceof z.ZodError) {
-                const message = this._getZodErrorMessages(err);
-                logger.debug(`Calculator: Request validation failed: ${message}`);
-                throw new Error(message);
-            }
-            throw err;
+        if (operation === "/" && second === 0) {
+            throw new CalculatorError(`Division by zero is not supported.`);
         }
     }
+
     _calculate({first, second, operation}: CalcRequest): number {
         return MAPPER[operation](first, second);
-    }
-    _getZodErrorMessages(zodError: z.ZodError): string {
-        return zodError.issues
-            .map(issue => issue.message)
-            .join("; ");
     }
 }
