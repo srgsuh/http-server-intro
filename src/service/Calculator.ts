@@ -11,14 +11,24 @@ export type CalcResponse = CalcRequest & {result: number;};
 export class CalculatorError extends Error {}
 
 type OperationMap = {
-    [operation: string]: (a: number, b: number) => number;
+    [operation: string]: {
+        calculate: (a: number, b: number) => number,
+        validate?: (a: number, b: number) => void,
+    }
 }
 
 const MAPPER: OperationMap = {
-    "+": (a: number, b: number) => a + b,
-    "-": (a: number, b: number) => a - b,
-    "*": (a: number, b: number) => a * b,
-    "/": (a: number, b: number) => a / b,
+    "+": {calculate: (a: number, b: number) => a + b,},
+    "-": {calculate: (a: number, b: number) => a - b,},
+    "*": {calculate: (a: number, b: number) => a * b,},
+    "/": {
+        calculate: (a: number, b: number) => a / b,
+        validate: (_: number, b: number) => {
+            if (b === 0) {
+                throw new CalculatorError(`Division by zero is not supported.`);
+            }
+        }
+    }
 }
 
 export class Calculator {
@@ -31,16 +41,14 @@ export class Calculator {
         return response;
     }
 
-    _validate({operation, second}: CalcRequest): void {
+    _validate({operation, first, second}: CalcRequest): void {
         if (!(operation in MAPPER)) {
             throw new CalculatorError(`Unsupported operation: ${operation}. Expected one of: ${Object.keys(MAPPER).join(", ")}`);
         }
-        if (operation === "/" && second === 0) {
-            throw new CalculatorError(`Division by zero is not supported.`);
-        }
+        MAPPER[operation].validate?.(first, second);
     }
 
     _calculate({first, second, operation}: CalcRequest): number {
-        return MAPPER[operation](first, second);
+        return MAPPER[operation].calculate(first, second);
     }
 }
