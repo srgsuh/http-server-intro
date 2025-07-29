@@ -25,15 +25,19 @@ const MAPPER: OperationMap = {
 }
 
 export class Calculator {
-    async compute (bodyObject: unknown): Promise<CalcResponse> {
-        const calcRequest = await this._getCalcRequest(bodyObject);
+    compute (calcRequest: CalcRequest): CalcResponse {
         const result = this._calculate(calcRequest);
         const response: CalcResponse = {...calcRequest, result};
         logger.debug(`Calculator: response: ${JSON.stringify(response)}`);
 
         return response;
     }
-    async _getCalcRequest(bodyObject: unknown): Promise<CalcRequest> {
+
+    _calculate({first, second, operation}: CalcRequest): number {
+        return MAPPER[operation](first, second);
+    }
+
+    static async getCalcRequest(bodyObject: unknown): Promise<CalcRequest> {
         try {
             const data = await requestSchema.parseAsync(bodyObject);
             logger.debug(`Calculator: Valid request received: ${JSON.stringify(data)}`);
@@ -42,17 +46,14 @@ export class Calculator {
         catch (err: unknown) {
             logger.debug(`Calculator: Error: ${err}`);
             if (err instanceof z.ZodError) {
-                const message = this._getZodErrorMessages(err);
+                const message = Calculator.getZodErrorMessages(err);
                 logger.debug(`Calculator: Request validation failed: ${message}`);
                 throw new Error(message);
             }
             throw err;
         }
     }
-    _calculate({first, second, operation}: CalcRequest): number {
-        return MAPPER[operation](first, second);
-    }
-    _getZodErrorMessages(zodError: z.ZodError): string {
+    private static getZodErrorMessages(zodError: z.ZodError): string {
         return zodError.issues
             .map(issue => issue.message)
             .join("; ");

@@ -12,5 +12,6 @@ export async function calcController(req: IncomingMessage, res: ServerResponse) 
 
 async function processRequest(req: IncomingMessage, calculator: Calculator) {
     const body = await getRequestBody(req);
-    return calculator.compute(body);
+    const calcRequest = await Calculator.getCalcRequest(body);
+    return calculator.compute(calcRequest);
 }
