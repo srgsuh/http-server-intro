@@ -26,16 +26,16 @@ const MAPPER: OperationMap = {
 
 export class Calculator {
     async compute (bodyObject: unknown): Promise<CalcResponse> {
-        const calcRequest = this._getCalcRequest(bodyObject);
+        const calcRequest = await this._getCalcRequest(bodyObject);
         const result = this._calculate(calcRequest);
         const response: CalcResponse = {...calcRequest, result};
         logger.debug(`Calculator: response: ${JSON.stringify(response)}`);
 
         return response;
     }
-    _getCalcRequest(bodyObject: unknown): CalcRequest {
+    async _getCalcRequest(bodyObject: unknown): Promise<CalcRequest> {
         try {
-            const data = requestSchema.parse(bodyObject);
+            const data = await requestSchema.parseAsync(bodyObject);
             logger.debug(`Calculator: Valid request received: ${JSON.stringify(data)}`);
             return data;
         }

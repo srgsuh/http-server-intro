@@ -1,6 +1,6 @@
 import {IncomingMessage, ServerResponse} from "node:http";
+import {sendError} from "../utils/http-utils.js";
 
 export async function notFoundController(_: IncomingMessage, res: ServerResponse) {
-    res.writeHead(404, {'Content-Type': 'application/json'});
-    res.end(JSON.stringify({ error: "Page not found"}));
+    sendError(res, "Page not found", 404);
 }
