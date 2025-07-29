@@ -13,23 +13,14 @@ export function sendSuccess(res: ServerResponse, body: unknown) {
     sendResponse(res, 200, jsonBody);
 }
 
-export function sendError(res: ServerResponse, error: unknown, status = 400) {
-    let message;
-    let statusCode = status ?? 400;
-    if (createError.isHttpError(error)) {
-        statusCode = error.statusCode;
-    }
-    if (error instanceof Error) {
-        message = error.message;
-    }
-    else {
-        message = `${error}`;
-    }
-    sendResponse(res, statusCode, JSON.stringify({ error: message}));
+export function sendError(res: ServerResponse, error: unknown, status: number = 400) {
+    let statusCode = createError.isHttpError(error)? error.statusCode: status;
+    let message = (error instanceof Error)? error.message: `${error}`;
+
+    sendResponse(res, statusCode, JSON.stringify({error: message}));
 }
 
 export async function getRequestBody(req: IncomingMessage): Promise<unknown> {
-
     let bodyString = "";
     for await (const chunk of req) {
         bodyString += chunk;
